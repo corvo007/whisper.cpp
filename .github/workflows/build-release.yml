@@ -82,7 +82,7 @@ jobs:
           path: whisper-${{ github.event.inputs.version }}-linux-arm64.tar.gz
 
   macos-x86_64:
-    runs-on: macos-15-large
+    runs-on: macos-15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
