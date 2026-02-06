@@ -4,12 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version tag to build (e.g., v1.8.3)'
+        description: 'Version number (e.g., v1.8.4). Tag v1.8.4-custom will be checked out.'
         required: true
         default: 'v1.8.4'
 
 env:
   BUILD_TYPE: Release
+  TAG_NAME: ${{ github.event.inputs.version }}-custom
 
 jobs:
   linux-x86_64:
@@ -18,7 +19,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.version }}
+          ref: ${{ env.TAG_NAME }}
 
       - name: Install dependencies
         run: |
@@ -50,7 +51,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.version }}
+          ref: ${{ env.TAG_NAME }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -87,7 +88,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.version }}
+          ref: ${{ env.TAG_NAME }}
 
       - name: Build
         run: |
@@ -118,7 +119,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.version }}
+          ref: ${{ env.TAG_NAME }}
 
       - name: Build
         run: |
@@ -150,7 +151,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.version }}
+          ref: ${{ env.TAG_NAME }}
 
       - name: Build
         run: |
