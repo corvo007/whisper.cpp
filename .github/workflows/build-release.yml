@@ -37,13 +37,13 @@ jobs:
           cp build/bin/whisper-cli release/
           cp build/bin/whisper-server release/ || true
           cp build/src/libwhisper.so release/ || true
-          tar -czvf whisper-${{ github.event.inputs.version }}-linux-x86_64.tar.gz -C release .
+          tar -czvf whisper-linux-x86_64.tar.gz -C release .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: whisper-${{ github.event.inputs.version }}-linux-x86_64
-          path: whisper-${{ github.event.inputs.version }}-linux-x86_64.tar.gz
+          name: whisper-linux-x86_64
+          path: whisper-linux-x86_64.tar.gz
 
   linux-arm64:
     runs-on: ubuntu-22.04
@@ -74,13 +74,13 @@ jobs:
 
       - name: Package
         run: |
-          tar -czvf whisper-${{ github.event.inputs.version }}-linux-arm64.tar.gz -C release .
+          tar -czvf whisper-linux-arm64.tar.gz -C release .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: whisper-${{ github.event.inputs.version }}-linux-arm64
-          path: whisper-${{ github.event.inputs.version }}-linux-arm64.tar.gz
+          name: whisper-linux-arm64
+          path: whisper-linux-arm64.tar.gz
 
   macos-x86_64:
     runs-on: macos-15
@@ -105,13 +105,13 @@ jobs:
           cp build/bin/whisper-cli release/
           cp build/bin/whisper-server release/ || true
           cp build/src/libwhisper.dylib release/ || true
-          tar -czvf whisper-${{ github.event.inputs.version }}-macos-x86_64.tar.gz -C release .
+          tar -czvf whisper-macos-x86_64.tar.gz -C release .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: whisper-${{ github.event.inputs.version }}-macos-x86_64
-          path: whisper-${{ github.event.inputs.version }}-macos-x86_64.tar.gz
+          name: whisper-macos-x86_64
+          path: whisper-macos-x86_64.tar.gz
 
   macos-arm64:
     runs-on: macos-14
@@ -137,13 +137,13 @@ jobs:
           cp build/bin/whisper-server release/ || true
           cp build/src/libwhisper.dylib release/ || true
           cp build/bin/ggml-metal.metal release/ || true
-          tar -czvf whisper-${{ github.event.inputs.version }}-macos-arm64.tar.gz -C release .
+          tar -czvf whisper-macos-arm64.tar.gz -C release .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: whisper-${{ github.event.inputs.version }}-macos-arm64
-          path: whisper-${{ github.event.inputs.version }}-macos-arm64.tar.gz
+          name: whisper-macos-arm64
+          path: whisper-macos-arm64.tar.gz
 
   windows-x86_64:
     runs-on: windows-latest
@@ -167,13 +167,13 @@ jobs:
           Copy-Item build\bin\${{ env.BUILD_TYPE }}\ggml.dll release\ -ErrorAction SilentlyContinue
           Copy-Item build\bin\${{ env.BUILD_TYPE }}\ggml-base.dll release\ -ErrorAction SilentlyContinue
           Copy-Item build\bin\${{ env.BUILD_TYPE }}\ggml-cpu.dll release\ -ErrorAction SilentlyContinue
-          Compress-Archive -Path release\* -DestinationPath whisper-${{ github.event.inputs.version }}-windows-x86_64.zip
+          Compress-Archive -Path release\* -DestinationPath whisper-windows-x86_64.zip
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: whisper-${{ github.event.inputs.version }}-windows-x86_64
-          path: whisper-${{ github.event.inputs.version }}-windows-x86_64.zip
+          name: whisper-windows-x86_64
+          path: whisper-windows-x86_64.zip
 
   release:
     needs: [linux-x86_64, linux-arm64, macos-x86_64, macos-arm64, windows-x86_64]
