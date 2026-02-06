@@ -3628,17 +3628,16 @@ struct whisper_context_params whisper_context_default_params() {
 struct whisper_context * whisper_init_from_file_with_params_no_state(const char * path_model, struct whisper_context_params params) {
     WHISPER_LOG_INFO("%s: loading model from '%s'\n", __func__, path_model);
 #ifdef _WIN32
-    // On Windows, path_model may be UTF-8 (from programs that pass UTF-8 strings)
-    // or in the system ANSI code page (from main(argc, argv) on non-UTF-8 locales).
-    // Strategy: try UTF-8 first via MultiByteToWideChar(CP_UTF8) with MB_ERR_INVALID_CHARS,
-    // if that fails, fall back to the system ANSI code page (CP_ACP).
+    // Convert path to wide string (UTF-16) for Windows.
+    // Try UTF-8 first; if invalid, fall back to the system ANSI code page (e.g. CP936).
+    // This handles both UTF-8 paths (from manifest-enabled or Unicode-aware callers)
+    // and ANSI paths (from the default MSVC main() which uses the system code page).
     std::wstring path_model_wide;
     int wlen = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, path_model, -1, nullptr, 0);
     if (wlen > 0) {
         path_model_wide.resize(wlen - 1);
         MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, path_model, -1, &path_model_wide[0], wlen);
     } else {
-        // Not valid UTF-8, fall back to system ANSI code page
         wlen = MultiByteToWideChar(CP_ACP, 0, path_model, -1, nullptr, 0);
         if (wlen > 0) {
             path_model_wide.resize(wlen - 1);
