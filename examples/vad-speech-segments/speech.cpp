@@ -64,8 +64,8 @@ static bool vad_params_parse(int argc, char ** argv, cli_params & params) {
         else if (arg == "-ug"   || arg == "--use-gpu")                     { params.use_gpu                     = true; }
         else if (arg == "-vm"   || arg == "--vad-model")                   { params.vad_model                   = ARGV_NEXT; }
         else if (arg == "-vt"   || arg == "--vad-threshold")               { params.vad_threshold               = std::stof(ARGV_NEXT); }
-        else if (arg == "-vsd"  || arg == "--vad-min-speech-duration-ms")  { params.vad_min_speech_duration_ms  = std::stoi(ARGV_NEXT); }
-        else if (arg == "-vsd"  || arg == "--vad-min-silence-duration-ms") { params.vad_min_speech_duration_ms  = std::stoi(ARGV_NEXT); }
+        else if (arg == "-vspd" || arg == "--vad-min-speech-duration-ms")  { params.vad_min_speech_duration_ms  = std::stoi(ARGV_NEXT); }
+        else if (arg == "-vsd"  || arg == "--vad-min-silence-duration-ms") { params.vad_min_silence_duration_ms = std::stoi(ARGV_NEXT); }
         else if (arg == "-vmsd" || arg == "--vad-max-speech-duration-s")   { params.vad_max_speech_duration_s   = std::stof(ARGV_NEXT); }
         else if (arg == "-vp"   || arg == "--vad-speech-pad-ms")           { params.vad_speech_pad_ms           = std::stoi(ARGV_NEXT); }
         else if (arg == "-vo"   || arg == "--vad-samples-overlap")         { params.vad_samples_overlap         = std::stof(ARGV_NEXT); }
@@ -137,8 +137,8 @@ int main(int argc, char ** argv) {
     printf("Detected %d speech segments:\n", whisper_vad_segments_n_segments(segments));
     for (int i = 0; i < whisper_vad_segments_n_segments(segments); ++i) {
         printf("Speech segment %d: start = %.2f, end = %.2f\n", i,
-               whisper_vad_segments_get_segment_t0(segments, i),
-               whisper_vad_segments_get_segment_t1(segments, i));
+               whisper_vad_segments_get_segment_t0(segments, i) / 100.0f,
+               whisper_vad_segments_get_segment_t1(segments, i) / 100.0f);
     }
     printf("\n");
 
