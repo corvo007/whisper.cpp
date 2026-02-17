@@ -36,6 +36,7 @@ jobs:
           mkdir -p release
           cp build/bin/whisper-cli release/
           cp build/bin/whisper-server release/ || true
+          cp build/bin/whisper-vad-speech-segments release/ || true
           tar -czvf whisper-linux-x86_64.tar.gz -C release .
 
       - name: Upload artifact
@@ -68,6 +69,7 @@ jobs:
             mkdir -p release
             cp build/bin/whisper-cli release/ || true
             cp build/bin/whisper-server release/ || true
+            cp build/bin/whisper-vad-speech-segments release/ || true
             '
 
       - name: Package
@@ -103,6 +105,7 @@ jobs:
           mkdir -p release
           cp build/bin/whisper-cli release/
           cp build/bin/whisper-server release/ || true
+          cp build/bin/whisper-vad-speech-segments release/ || true
           tar -czvf whisper-macos-x86_64.tar.gz -C release .
 
       - name: Upload artifact
@@ -134,6 +137,7 @@ jobs:
           mkdir -p release
           cp build/bin/whisper-cli release/
           cp build/bin/whisper-server release/ || true
+          cp build/bin/whisper-vad-speech-segments release/ || true
           cp build/bin/ggml-metal.metal release/ || true
           tar -czvf whisper-macos-arm64.tar.gz -C release .
 
@@ -161,6 +165,7 @@ jobs:
           New-Item -ItemType Directory -Force -Path release
           Copy-Item build\bin\${{ env.BUILD_TYPE }}\whisper-cli.exe release\ -ErrorAction SilentlyContinue
           Copy-Item build\bin\${{ env.BUILD_TYPE }}\whisper-server.exe release\ -ErrorAction SilentlyContinue
+          Copy-Item build\bin\${{ env.BUILD_TYPE }}\whisper-vad-speech-segments.exe release\ -ErrorAction SilentlyContinue
           Compress-Archive -Path release\* -DestinationPath whisper-windows-x86_64.zip
 
       - name: Upload artifact
@@ -203,6 +208,7 @@ jobs:
             Each archive contains:
             - `whisper-cli` - Command line tool (statically linked)
             - `whisper-server` - HTTP server (statically linked)
+            - `whisper-vad-speech-segments` - VAD-only speech segmentation tool (statically linked)
           files: |
             artifacts/**/*.tar.gz
             artifacts/**/*.zip
