@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version number (e.g., v1.8.5). Tag v1.8.5-custom will be checked out.'
+        description: 'Version number (e.g., v1.8.6). Tag v1.8.6-custom will be checked out.'
         required: true
-        default: 'v1.8.5'
+        default: 'v1.8.6'
 
 env:
   BUILD_TYPE: Release
