@@ -3,6 +3,8 @@
 
 #include "whisper.h"
 #include "grammar-parser.h"
+#include "crash_handler.h"
+#include "stacktrace.h"
 
 #include <cmath>
 #include <algorithm>
@@ -926,6 +928,9 @@ static void output_lrc(struct whisper_context * ctx, std::ofstream & fout, const
 static void cb_log_disable(enum ggml_log_level , const char * , void * ) { }
 
 int main(int argc, char ** argv) {
+    crash_handler::install();
+
+  try {
     ggml_backend_load_all();
 
 #if defined(_WIN32)
@@ -1311,4 +1316,14 @@ int main(int argc, char ** argv) {
     whisper_free(ctx);
 
     return 0;
+
+  } catch (const std::exception& e) {
+    fprintf(stderr, "\n[ERROR] %s\n", e.what());
+    fprintf(stderr, "%s\n", stacktrace::capture_string(0).c_str());
+    return 1;
+  } catch (...) {
+    fprintf(stderr, "\n[ERROR] Unknown exception\n");
+    fprintf(stderr, "%s\n", stacktrace::capture_string(0).c_str());
+    return 1;
+  }
 }
