@@ -1,0 +1,223 @@
+name: Build Release Binaries
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., v1.8.6). Tag v1.8.6-custom will be checked out.'
+        required: true
+        default: 'v1.8.8'
+
+env:
+  BUILD_TYPE: Release
+  TAG_NAME: ${{ github.event.inputs.version }}-custom
+
+jobs:
+  linux-x86_64:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG_NAME }}
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake
+
+      - name: Build
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DBUILD_SHARED_LIBS=OFF
+          cmake --build build --config ${{ env.BUILD_TYPE }} -j $(nproc)
+
+      - name: Package
+        run: |
+          mkdir -p release
+          cp build/bin/whisper-cli release/
+          cp build/bin/whisper-server release/ || true
+          cp build/bin/whisper-vad-speech-segments release/ || true
+          tar -czvf whisper-linux-x86_64.tar.gz -C release .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: whisper-linux-x86_64
+          path: whisper-linux-x86_64.tar.gz
+
+  linux-arm64:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG_NAME }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Build in ARM64 container
+        run: |
+          docker run --platform linux/arm64 --rm \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace ubuntu:22.04 /bin/bash -c '
+            set -e
+            apt-get update
+            apt-get install -y build-essential cmake
+            cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DGGML_NATIVE=OFF -DGGML_CPU_ARM_ARCH=armv8-a
+            cmake --build build --config Release -j $(nproc)
+            mkdir -p release
+            cp build/bin/whisper-cli release/ || true
+            cp build/bin/whisper-server release/ || true
+            cp build/bin/whisper-vad-speech-segments release/ || true
+            '
+
+      - name: Package
+        run: |
+          tar -czvf whisper-linux-arm64.tar.gz -C release .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: whisper-linux-arm64
+          path: whisper-linux-arm64.tar.gz
+
+  macos-x86_64:
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG_NAME }}
+
+      - name: Build
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DCMAKE_OSX_ARCHITECTURES=x86_64 \
+            -DGGML_METAL=OFF \
+            -DGGML_NATIVE=OFF
+          cmake --build build --config ${{ env.BUILD_TYPE }} -j $(sysctl -n hw.logicalcpu)
+
+      - name: Package
+        run: |
+          mkdir -p release
+          cp build/bin/whisper-cli release/
+          cp build/bin/whisper-server release/ || true
+          cp build/bin/whisper-vad-speech-segments release/ || true
+          tar -czvf whisper-macos-x86_64.tar.gz -C release .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: whisper-macos-x86_64
+          path: whisper-macos-x86_64.tar.gz
+
+  macos-arm64:
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG_NAME }}
+
+      - name: Build
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DCMAKE_OSX_ARCHITECTURES=arm64 \
+            -DGGML_METAL=ON \
+            -DGGML_METAL_EMBED_LIBRARY=ON
+          cmake --build build --config ${{ env.BUILD_TYPE }} -j $(sysctl -n hw.logicalcpu)
+
+      - name: Package
+        run: |
+          mkdir -p release
+          cp build/bin/whisper-cli release/
+          cp build/bin/whisper-server release/ || true
+          cp build/bin/whisper-vad-speech-segments release/ || true
+          cp build/bin/ggml-metal.metal release/ || true
+          tar -czvf whisper-macos-arm64.tar.gz -C release .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: whisper-macos-arm64
+          path: whisper-macos-arm64.tar.gz
+
+  windows-x86_64:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG_NAME }}
+
+      - name: Build
+        run: |
+          # Static MSVC runtime (/MT): without this the binaries depend on
+          # msvcp140.dll/vcruntime140*.dll (VC++ Redistributable), which is
+          # missing on fresh Windows installs -> exit 0xC0000135 (MIOSUB-7J).
+          # CMP0091=NEW is required because cmake_minimum_required is < 3.15,
+          # otherwise CMAKE_MSVC_RUNTIME_LIBRARY is silently ignored.
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DBUILD_SHARED_LIBS=OFF -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+          cmake --build build --config ${{ env.BUILD_TYPE }} -j $env:NUMBER_OF_PROCESSORS
+
+      - name: Package
+        run: |
+          New-Item -ItemType Directory -Force -Path release
+          Copy-Item build\bin\${{ env.BUILD_TYPE }}\whisper-cli.exe release\ -ErrorAction SilentlyContinue
+          Copy-Item build\bin\${{ env.BUILD_TYPE }}\whisper-server.exe release\ -ErrorAction SilentlyContinue
+          Copy-Item build\bin\${{ env.BUILD_TYPE }}\whisper-vad-speech-segments.exe release\ -ErrorAction SilentlyContinue
+          Compress-Archive -Path release\* -DestinationPath whisper-windows-x86_64.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: whisper-windows-x86_64
+          path: whisper-windows-x86_64.zip
+
+  release:
+    needs: [linux-x86_64, linux-arm64, macos-x86_64, macos-arm64, windows-x86_64]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: List artifacts
+        run: find artifacts -type f
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.version }}-custom
+          name: whisper.cpp ${{ github.event.inputs.version }} (Custom Build)
+          body: |
+            Custom build of whisper.cpp ${{ github.event.inputs.version }}
+
+            ## Included platforms
+            - Linux x86_64
+            - Linux arm64
+            - macOS x86_64 (Intel)
+            - macOS arm64 (Apple Silicon, with Metal support)
+            - Windows x86_64
+
+            ## Contents
+            Each archive contains:
+            - `whisper-cli` - Command line tool (statically linked)
+            - `whisper-server` - HTTP server (statically linked)
+            - `whisper-vad-speech-segments` - VAD-only speech segmentation tool (statically linked)
+
+            Windows binaries use the static MSVC runtime (/MT) — no VC++ Redistributable required.
+          files: |
+            artifacts/**/*.tar.gz
+            artifacts/**/*.zip
+          draft: false
+          prerelease: false
